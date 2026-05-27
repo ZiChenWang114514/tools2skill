@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "name": "<tool_name>",
+  "version": "1.0.0",
+  "tool_name": "<tool_name>",
+  "tool_version_tested": "<e.g. 8.1.1>",
+  "tool_type": "CLI | Python lib | REST API | SDK | Config | Other",
+  "mastery_status": "MASTERED | PARTIAL MASTERY | BETA",
+  "mastery_metrics": {
+    "M1_use_case_coverage": 0.0,
+    "M2_qa_confidence_rate": 0.0,
+    "M3_gotcha_density": 0,
+    "M5_skill_tokens": 0
+  },
+  "session_id": "YYYY-MM-DD_<tool_name>",
+  "generated_at": "<ISO 8601 datetime>",
+  "author": "tools2skill/claude-sonnet-4-6",
+  "triggers": ["<tool_name>", "<alternative invocation>"],
+  "dependencies": [],
+  "tags": ["<category>", "<domain>"],
+  "description": "Expert operational guide for <tool_name>. TRIGGER when user asks to use <tool_name> or when code imports/invokes it.",
+  "known_gaps": [],
+  "portability": {
+    "machine_specific": false,
+    "requires_local_setup": false,
+    "notes": ""
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "<date>",
+      "notes": "Initial release from tools2skill session."
+    }
+  ]
+}

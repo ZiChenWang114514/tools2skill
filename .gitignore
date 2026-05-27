@@ -1,0 +1,15 @@
+# Exported bundles (don't commit .t2s files by default; use GitHub Releases)
+*.t2s
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor artifacts
+.DS_Store
+*.swp
+*.swo
+
+# Local-only sessions (sessions/ is tracked, but large binary artifacts are not)
+sessions/**/*.pkl
+sessions/**/*.bin

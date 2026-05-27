@@ -131,40 +131,62 @@ FOR each use_case IN canonical_use_cases:
 
 ---
 
-#### Phase 4 — Skill Synthesis (Compression & Packaging)
+#### Phase 4 — Skill Synthesis, Packaging & Registration
 
-**Goal:** Distill harness context into a minimal, complete, portable skill.
+**Goal:** Distill harness context into a minimal, portable, hot-pluggable skill artifact.
+
+Phase 4 has three sub-steps:
+
+##### 4a — Synthesis (Compression)
 
 **Compression principles:**
 1. **Exclude** raw doc content (retrievable on demand)
 2. **Include** patterns that are non-obvious from docs alone
 3. **Prioritize** gotchas, edge cases, and sequencing requirements
 4. **Format** for agent consumption, not human reading
+5. **Pass portability check** before proceeding to 4b (see `methodology/portability_rules.md`)
 
-**Skill output structure:**
-```markdown
+Output: `skills/<tool_name>.md`
+
+##### 4b — Packaging (Manifest Creation)
+
+Create `skills/<tool_name>.manifest.json` using `templates/manifest_template.json`.
+Fill in all fields: version, tool_version_tested, mastery_metrics M1-M5, triggers, tags.
+
+Run portability validation:
+```bash
+./t2s validate <tool_name>
+```
+Fix any violations before proceeding.
+
+##### 4c — Registration & Hot-Plug
+
+Install into Claude Code:
+```bash
+./t2s install <tool_name>
+```
+
+This copies the skill to `~/.claude/skills/<tool_name>.md`, making it
+**immediately available in all new Claude Code sessions** without any restart.
+
+The registry (`registry.json`) is updated automatically.
+
+**Exit criterion:** `t2s list --installed` shows the skill as INSTALLED.
+
 ---
-name: <tool_name>
-description: Expert operational guide for <tool_name>. TRIGGER when user asks to use <tool_name> or when code imports/invokes it.
----
 
-## What This Tool Does
-<!-- 2-3 sentences: purpose, primary domain, key strengths -->
+#### Export (Optional, post-Phase 4)
 
-## Setup & Prerequisites
-<!-- Minimal install / config required -->
+To make the skill portable and shareable:
+```bash
+./t2s export <tool_name>          # creates <tool_name>.t2s bundle
+./t2s export <tool_name> --out /tmp  # specify output dir
+```
 
-## Core Patterns
-<!-- 5-10 validated patterns with working code snippets -->
-
-## Gotchas & Common Failures
-<!-- Annotated failure modes from Phase 2 -->
-
-## QA Cheatsheet
-<!-- 10 highest-value Q&A pairs from Phase 3 -->
-
-## Sequencing Notes
-<!-- Order-dependent operations, initialization requirements -->
+Recipients install with:
+```bash
+./t2s import <tool_name>.t2s
+./t2s install <tool_name>
 ```
 
 ---
@@ -195,7 +217,90 @@ The curriculum adapts based on tool type:
 
 ---
 
-## 6. Meta-Skill Design
+## 6. Hot-Plug & Export Architecture
+
+### 6.1 The Hot-Plug Path
+
+Claude Code loads skills from `~/.claude/skills/` at the start of each session.
+This makes the install/uninstall cycle naturally hot-pluggable:
+
+```
+skills/<name>.md    ──t2s install──▶   ~/.claude/skills/<name>.md
+                                              │
+                                              ▼
+                                    Available in next Claude Code session
+                                    (no restart of the harness required)
+
+~/.claude/skills/<name>.md  ──t2s uninstall──▶   (deleted)
+                                              │
+                                              ▼
+                                    Removed from next Claude Code session
+```
+
+### 6.2 The Export Bundle Format
+
+A `.t2s` file is a ZIP archive containing:
+
+```
+<tool_name>.t2s  (ZIP)
+├── skill.md          ← clean skill for Claude Code consumption
+├── manifest.json     ← machine-readable metadata
+├── bundle_meta.json  ← bundle creation timestamp + schema version
+└── session_log.md    ← (optional) learning session that produced this skill
+```
+
+The bundle is **self-contained**: no external references required to install and use.
+
+### 6.3 Registry
+
+`registry.json` tracks the state of all generated skills:
+
+```json
+{
+  "schema_version": "1.0",
+  "skills": {
+    "<tool_name>": {
+      "version": "1.0.0",
+      "installed": true,
+      "install_path": "/home/<user>/.claude/skills/<tool_name>.md",
+      "source_path": "skills/<tool_name>.md",
+      "installed_at": "<ISO datetime>",
+      "mastery_status": "MASTERED",
+      "tool_version_tested": "<version>"
+    }
+  }
+}
+```
+
+### 6.4 t2s CLI Reference
+
+```
+t2s install <name>           Hot-plug into Claude Code (with portability check)
+t2s install <name> --force   Skip portability check
+t2s uninstall <name>         Remove from Claude Code
+t2s list                     Show all skills (available + installed)
+t2s list --installed         Show only installed skills
+t2s export <name>            Create portable .t2s bundle
+t2s export <name> --out DIR  Export to specific directory
+t2s import <path>            Install from local .t2s bundle
+t2s import <url>             Download + install from URL
+t2s validate <name>          Check for portability violations
+t2s status                   Full registry dump
+t2s new-manifest <name>      Create manifest for existing skill file
+```
+
+### 6.5 Portability Guarantees
+
+Before any skill can be exported, it must pass portability validation (`t2s validate`).
+See `methodology/portability_rules.md` for the full ruleset. Key constraints:
+- No absolute paths
+- No hardcoded usernames or machine-specific paths
+- No secrets or API keys
+- Version requirements as ranges, not exact pins
+
+---
+
+## 7. Meta-Skill Design
 
 The orchestrating skill (`tools2skill.md`) will:
 - Accept: `tool_name`, `tool_type`, optional `docs_url`
@@ -210,7 +315,7 @@ The orchestrating skill (`tools2skill.md`) will:
 
 ---
 
-## 7. Research Questions
+## 8. Research Questions
 
 1. **Curriculum ordering**: Is the reconnaissance-first order optimal for all tool types?
 2. **Mastery threshold**: Is 90% QA confidence a reliable mastery proxy?
@@ -220,7 +325,7 @@ The orchestrating skill (`tools2skill.md`) will:
 
 ---
 
-## 8. Roadmap
+## 9. Roadmap
 
 | Milestone | Description |
 |-----------|-------------|
